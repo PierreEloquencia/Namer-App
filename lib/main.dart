@@ -29,23 +29,24 @@ class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var history = <WordPair>[];
 
-  GlobalKey? histoyListKey;
+  GlobalKey? historyListKey;
 
   void getNext() {
     history.insert(0, current);
-    var animatedList = histoyListKey?.currentState as AnimatedListState?;
+    var animatedList = historyListKey?.currentState as AnimatedListState?;
     animatedList?.insertItem(0);
     current = WordPair.random();
     notifyListeners();
   }
+
   var favorites = <WordPair>[];
 
   void toggleFavorite([WordPair? pair]) {
     pair = pair ?? current;
-    if (favorites.contains(current)) {
-      favorites.remove(current);
+    if (favorites.contains(pair)) {
+      favorites.remove(pair);
     } else {
-      favorites.add(current);
+      favorites.add(pair);
     }
     notifyListeners();
   }
@@ -63,9 +64,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     var colorScheme = Theme.of(context).colorScheme;
+
     Widget page;
     switch (selectedIndex) {
       case 0:
@@ -85,6 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: page,
       ),
     );
+
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -146,8 +150,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-} 
-
+}
 
 class GeneratorPage extends StatelessWidget {
   @override
@@ -217,7 +220,7 @@ class BigCard extends StatelessWidget {
     return Card(
       color: theme.colorScheme.primary,
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20),
         child: AnimatedSize(
           duration: Duration(milliseconds: 200),
           child: MergeSemantics(
@@ -230,7 +233,7 @@ class BigCard extends StatelessWidget {
                 Text(
                   pair.second,
                   style: style.copyWith(fontWeight: FontWeight.bold),
-                ),
+                )
               ],
             ),
           ),
@@ -243,16 +246,50 @@ class BigCard extends StatelessWidget {
 class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     var appState = context.watch<MyAppState>();
-    var favorites = appState.favorites;
 
-    if (favorites.isEmpty) {
+    if (appState.favorites.isEmpty) {
       return Center(
         child: Text('No favorites yet!'),
       );
     }
 
-    '''return ListView.builder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(30),
+          child: Text('You have ${appState.favorites.length} favorites:'),
+        ),
+        Expanded(
+          child: GridView(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 400,
+              childAspectRatio: 400 / 80,
+            ),
+            children: [
+              for (var pair in appState.favorites)
+                ListTile(
+                  leading: IconButton(
+                    icon: Icon(Icons.delete_outline, semanticLabel: 'Delete'),
+                    color: theme.colorScheme.primary,
+                    onPressed: () {
+                      appState.removeFavorite(pair);
+                    },
+                  ),
+                  title: Text(
+                    pair.asLowerCase,
+                    semanticsLabel: pair.asPascalCase,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    /*return ListView.builder(
       itemCount: favorites.length,
       itemBuilder: (context, index) {
         var pair = favorites[index];
@@ -261,13 +298,12 @@ class FavoritesPage extends StatelessWidget {
         );
       },
     );
-    ''';
+
     return ListView(
       children: [
         Padding(
           padding: const EdgeInsets.all(20),
-          child: Text('You have '
-              '${appState.favorites.length} favorites:'),
+          child: Text('You have ${appState.favorites.length} favorites:'),
         ),
         for (var pair in appState.favorites)
           ListTile(
@@ -275,7 +311,7 @@ class FavoritesPage extends StatelessWidget {
             title: Text(pair.asLowerCase),
           ),
       ],
-    );
+    )*/
   }
 }
 
